@@ -83,12 +83,7 @@ class FreePropModel:
         
     def fit(self, x: tf.Tensor) -> tf.Tensor:
         # \mathbf{N}
-        node_tensor = tf.zeros((x.shape[0], self.weights.shape[0]), dtype=self.dtype)
-        node_tensor = tf.tensor_scatter_nd_update(
-            node_tensor,
-            self._generate_node_tensor_indicies_for_inputs(x.shape[0]),
-            x,
-        )
+        node_tensor = tf.concat([x, tf.zeros((x.shape[0], self.weights.shape[0] - x.shape[1]))], axis=1)
         node_tensor = self.input_activation_fn(node_tensor)
         node_tensor = tf.transpose(node_tensor)
         
@@ -108,13 +103,3 @@ class FreePropModel:
         
         # return \mathbf{\hat{Y}}
         return node_tensor[:, self.input_shape:self.input_shape + self.output_shape]
-        
-    def _generate_node_tensor_indicies_for_inputs(self, batch_size: int) -> List[List[Tuple[int, int]]]:
-        result = []
-        # only rank 2 inputs are allowed right now, meaning that tensor is in the form (batch_size, data)
-        for i in range(batch_size):
-            tmp = []
-            for j in range(self.input_shape):
-                tmp.append([i, j])
-            result.append(tmp)
-        return result
